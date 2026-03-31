@@ -448,18 +448,29 @@ async def speak_text(text: str, voice_client: discord.VoiceClient) -> Optional[P
 
 
 def generate_tts_audio(text: str, output_path: Path):
-    """Generate TTS audio using Piper (blocking)."""
+    """Generate TTS audio using Piper 1.4+ (blocking)."""
     global tts_model
 
-    # Generate audio
-    audio, sample_rate = tts_model.synthesize(text)
+    # Piper 1.4+ synthesize() returns Iterable[AudioChunk]
+    audio_chunks = list(tts_model.synthesize(text))
+
+    if not audio_chunks:
+        raise ValueError("Piper returned no audio chunks")
+
+    # Use sample rate from first chunk (all chunks should be the same)
+    sample_rate = audio_chunks[0].sample_rate
+
+    # Concatenate all audio data
+    audio_bytes = b''.join(
+        chunk.audio_int16_array.tobytes() for chunk in audio_chunks
+    )
 
     # Save to WAV
     with wave.open(str(output_path), 'wb') as wf:
         wf.setnchannels(1)  # Mono
         wf.setsampwidth(2)  # 16-bit
         wf.setframerate(sample_rate)
-        wf.writeframes(audio.tobytes())
+        wf.writeframes(audio_bytes)
 
 
 async def play_audio(file_path: Path, voice_client: discord.VoiceClient):
