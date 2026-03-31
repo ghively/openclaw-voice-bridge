@@ -229,32 +229,29 @@ async def audio_monitor_loop():
 
     try:
         while _connected and sink is not None:
-            # Get next frame from sink (runs in executor to avoid blocking)
-            result = await loop.run_in_executor(executor, sink.get_frame, 0.5)
-            if result is None:
-                continue
+            # Check for new speakers without consuming their frames
+            # Sleep briefly to avoid busy-waiting
+            await asyncio.sleep(0.05)
 
-            user_id, frame_bytes = result
+            with sink._lock:
+                for uid in list(sink._user_queues.keys()):
+                    if uid not in processing_users and not sink._user_queues[uid].empty():
+                        # New speaker detected — start processing task
+                        display_name = str(uid)
+                        if voice_client and voice_client.guild:
+                            member = voice_client.guild.get_member(uid)
+                            if member:
+                                display_name = member.display_name
 
-            # Check if we're already processing this user
-            if user_id not in processing_users:
-                # New speaker detected — start processing task
-                # Get display name
-                display_name = str(user_id)
-                if voice_client and voice_client.guild:
-                    member = voice_client.guild.get_member(user_id)
-                    if member:
-                        display_name = member.display_name
+                        # Add to processing set BEFORE creating task (TOCTOU fix)
+                        processing_users.add(uid)
 
-                # Add to processing set BEFORE creating task (TOCTOU fix)
-                processing_users.add(user_id)
-
-                task = asyncio.create_task(
-                    process_user_audio(user_id, display_name)
-                )
-                background_tasks.add(task)
-                task.add_done_callback(background_tasks.discard)
-                logger.info(f"Started processing audio for {display_name} ({user_id})")
+                        task = asyncio.create_task(
+                            process_user_audio(uid, display_name)
+                        )
+                        background_tasks.add(task)
+                        task.add_done_callback(background_tasks.discard)
+                        logger.info(f"Started processing audio for {display_name} ({uid})")
 
     except asyncio.CancelledError:
         logger.info("Audio monitor loop cancelled")
@@ -669,7 +666,7 @@ async def leave_voice(ctx: commands.Context):
         logger.info("Leaving voice channel")
 
         # Stop listening
-        if voice_client.listening:
+        if voice_client.is_listening():
             voice_client.stop_listening()
 
         # Cancel all processing tasks
@@ -699,7 +696,7 @@ async def status_cmd(ctx: commands.Context):
     status_lines = [
         "**Voice Bridge Bot Status**",
         f"Connected: {'Yes' if voice_client and voice_client.is_connected() else 'No'}",
-        f"Listening: {'Yes' if voice_client and voice_client.listening else 'No'}",
+        f"Listening: {'Yes' if voice_client and voice_client.is_listening() else 'No'}",
         f"Processing Users: {len(processing_users)}",
         f"Background Tasks: {len(background_tasks)}",
         f"Temp Files: {len(_temp_files)}",
@@ -730,7 +727,7 @@ async def shutdown():
         await asyncio.sleep(0.5)
 
     # Stop listening
-    if voice_client and voice_client.listening:
+    if voice_client and voice_client.is_listening():
         voice_client.stop_listening()
 
     # Disconnect
@@ -742,6 +739,9 @@ async def shutdown():
 
     # Shutdown executor
     executor.shutdown(wait=False)
+
+    # Close the bot
+    await bot.close()
 
     logger.info("Shutdown complete")
 
