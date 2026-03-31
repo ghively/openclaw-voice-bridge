@@ -102,8 +102,10 @@ class VoiceBridgeSink(voice_recv.AudioSink):
                 frame = bytes(buffer[:self.FRAME_BYTES])
                 del buffer[:self.FRAME_BYTES]
 
-                # Queue the frame for processing
-                self.audio_queue.put((user_id, frame))
+                # Queue the frame for this specific user
+                if user_id not in self._user_queues:
+                    self._user_queues[user_id] = queue.Queue()
+                self._user_queues[user_id].put(frame)
 
     def evict_user(self, user_id: int) -> None:
         """
