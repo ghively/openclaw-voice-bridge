@@ -13,8 +13,8 @@ This project is a Discord voice bridge bot built on `discord.py` plus `discord-e
 
 The implementation is concentrated in two files:
 
-- [`main.py`](/Users/ghively/Projects/openclaw-voice-bridge/main.py)
-- [`audio_sink.py`](/Users/ghively/Projects/openclaw-voice-bridge/audio_sink.py)
+- [`main.py`](main.py)
+- [`audio_sink.py`](audio_sink.py)
 
 ## Architecture Overview
 
@@ -35,18 +35,13 @@ The intended runtime pipeline is:
 
 ### Actual current behavior
 
-The current code matches most of the architecture above, but there is an important sink implementation issue in [`audio_sink.py:106`](/Users/ghively/Projects/openclaw-voice-bridge/audio_sink.py#L106):
-
-- `write()` pushes frames into `self.audio_queue`, but `VoiceBridgeSink` defines `_user_queues` and does not initialize `audio_queue`.
-- `get_frame()` and `get_user_frame()` both read from `_user_queues`, but `write()` never populates those queues.
-
-As written, the per-user queue pipeline described by the comments is not fully wired up in code. This should be treated as a known issue in the current version.
+The current code matches the architecture above. An earlier revision had a sink implementation bug where `write()` pushed frames into a queue attribute that `get_frame()`/`get_user_frame()` never read from; that was fixed in [`audio_sink.py:106`](audio_sink.py#L106), where `write()` now populates the same `_user_queues` dict that the readers consume. The per-user queue pipeline described by the comments is fully wired up in the current code.
 
 ## Component Breakdown
 
 ### `VoiceBridgeSink`
 
-Defined in [`audio_sink.py`](/Users/ghively/Projects/openclaw-voice-bridge/audio_sink.py).
+Defined in [`audio_sink.py`](audio_sink.py).
 
 Responsibilities:
 
@@ -73,7 +68,7 @@ Internal state:
 
 ### `DiscordVoiceBridge`
 
-There is no class literally named `DiscordVoiceBridge` in the current codebase. The bridge is implemented procedurally in [`main.py`](/Users/ghively/Projects/openclaw-voice-bridge/main.py) using global state plus Discord event handlers and commands.
+There is no class literally named `DiscordVoiceBridge` in the current codebase. The bridge is implemented procedurally in [`main.py`](main.py) using global state plus Discord event handlers and commands.
 
 The effective bridge responsibilities are split across:
 
@@ -96,7 +91,7 @@ The effective bridge responsibilities are split across:
 
 ### VAD
 
-Implemented in [`process_user_audio()`](/Users/ghively/Projects/openclaw-voice-bridge/main.py#L265).
+Implemented in [`process_user_audio()`](main.py#L265).
 
 Behavior:
 
@@ -115,8 +110,8 @@ Behavior:
 
 Implemented across:
 
-- [`load_stt_model()`](/Users/ghively/Projects/openclaw-voice-bridge/main.py#L136)
-- [`transcribe_audio()`](/Users/ghively/Projects/openclaw-voice-bridge/main.py#L361)
+- [`load_stt_model()`](main.py#L136)
+- [`transcribe_audio()`](main.py#L361)
 
 Behavior:
 
@@ -135,11 +130,11 @@ Behavior:
 
 Implemented across:
 
-- [`load_tts_model()`](/Users/ghively/Projects/openclaw-voice-bridge/main.py#L150)
-- [`process_tts()`](/Users/ghively/Projects/openclaw-voice-bridge/main.py#L494)
-- [`speak_text()`](/Users/ghively/Projects/openclaw-voice-bridge/main.py#L418)
-- [`generate_tts_audio()`](/Users/ghively/Projects/openclaw-voice-bridge/main.py#L450)
-- [`play_audio()`](/Users/ghively/Projects/openclaw-voice-bridge/main.py#L476)
+- [`load_tts_model()`](main.py#L150)
+- [`process_tts()`](main.py#L494)
+- [`speak_text()`](main.py#L418)
+- [`generate_tts_audio()`](main.py#L450)
+- [`play_audio()`](main.py#L476)
 
 Behavior:
 
@@ -155,13 +150,13 @@ Behavior:
 Important scope note:
 
 - The current implementation does not restrict TTS to `TARGET_TEXT_CHANNEL_ID`.
-- Any message visible to the bot can trigger TTS while the bot is connected, subject to the bot filtering and cooldown rules in [`process_tts()`](/Users/ghively/Projects/openclaw-voice-bridge/main.py#L494).
+- Any message visible to the bot can trigger TTS while the bot is connected, subject to the bot filtering and cooldown rules in [`process_tts()`](main.py#L494).
 
 ## Audio Pipeline Details
 
 ### Input format from Discord
 
-According to the sink code comments in [`audio_sink.py:75`](/Users/ghively/Projects/openclaw-voice-bridge/audio_sink.py#L75), decoded input is assumed to be:
+According to the sink code comments in [`audio_sink.py:75`](audio_sink.py#L75), decoded input is assumed to be:
 
 - 48,000 Hz sample rate
 - Stereo
@@ -273,7 +268,7 @@ The main background async tasks are:
 
 ### Per-user isolation
 
-The intended design in [`audio_sink.py`](/Users/ghively/Projects/openclaw-voice-bridge/audio_sink.py) is per-user queue isolation:
+The intended design in [`audio_sink.py`](audio_sink.py) is per-user queue isolation:
 
 - each Discord user has a dedicated `queue.Queue`
 - the monitor loop detects active speakers
@@ -315,7 +310,7 @@ There is no explicit queue size limit, circuit breaker, or speaker fairness poli
 
 ### Intents
 
-Configured in [`main.py:87-91`](/Users/ghively/Projects/openclaw-voice-bridge/main.py#L87):
+Configured in [`main.py:87-91`](main.py#L87):
 
 - `message_content = True`
 - `voice_states = True`
@@ -372,7 +367,7 @@ It does not currently force sink-level eviction for a departing user.
 
 ## Configuration Reference
 
-The code reads configuration directly from environment variables at import time in [`main.py:44-69`](/Users/ghively/Projects/openclaw-voice-bridge/main.py#L44).
+The code reads configuration directly from environment variables at import time in [`main.py:44-69`](main.py#L44).
 
 ### Required variables
 
@@ -468,7 +463,7 @@ If these appear in local setup notes, treat them as documentation drift unless t
 
 ### `!join`
 
-Defined in [`main.py:601`](/Users/ghively/Projects/openclaw-voice-bridge/main.py#L601).
+Defined in [`main.py:601`](main.py#L601).
 
 Behavior:
 
@@ -491,7 +486,7 @@ Implementation note:
 
 ### `!leave`
 
-Defined in [`main.py:659`](/Users/ghively/Projects/openclaw-voice-bridge/main.py#L659).
+Defined in [`main.py:659`](main.py#L659).
 
 Behavior:
 
@@ -505,7 +500,7 @@ Behavior:
 
 ### `!status`
 
-Defined in [`main.py:697`](/Users/ghively/Projects/openclaw-voice-bridge/main.py#L697).
+Defined in [`main.py:697`](main.py#L697).
 
 Reports:
 
@@ -601,14 +596,15 @@ Avoid broad administrative permissions.
 
 Likely causes:
 
-- the sink queue pipeline is incomplete in the current implementation
-- `VoiceBridgeSink.write()` queues to `self.audio_queue`, while consumers read `_user_queues`
+- no `WHISPER_MODEL_SIZE`/`WHISPER_DEVICE` mismatch or a failure loading the Faster-Whisper model
+- VAD never detects speech because `VAD_AGGRESSIVENESS`/`VAD_SILENCE_DURATION` are misconfigured for the input
+- the bot never actually received audio (self-deafened, wrong channel, permission issue)
 
 What to check:
 
-- logs for errors originating from [`audio_sink.py:106`](/Users/ghively/Projects/openclaw-voice-bridge/audio_sink.py#L106)
-- whether the installed `discord-ext-voice-recv` base class happens to provide `audio_queue`
-- whether per-user queues are being created anywhere
+- logs for errors originating from [`audio_sink.py:106`](audio_sink.py#L106) (frame buffering/queueing)
+- whether `load_stt_model()` logged a successful model load at startup
+- whether per-user queues are being created for the speaking user (`evict_user`/`_user_queues` in [`audio_sink.py`](audio_sink.py))
 
 ### `ffmpeg not found`
 
@@ -646,7 +642,7 @@ Check:
 - `TARGET_TEXT_CHANNEL_ID` is correct
 - the bot can access that channel
 - the bot has permission to send messages there
-- logs for `discord.NotFound` or send exceptions in [`transcribe_audio()`](/Users/ghively/Projects/openclaw-voice-bridge/main.py#L361)
+- logs for `discord.NotFound` or send exceptions in [`transcribe_audio()`](main.py#L361)
 
 ### Speech is cut off too early
 
@@ -664,7 +660,7 @@ Try:
 
 Expected behavior:
 
-- TTS input is truncated to 2000 characters in [`main.py:426`](/Users/ghively/Projects/openclaw-voice-bridge/main.py#L426)
+- TTS input is truncated to 2000 characters in [`main.py:426`](main.py#L426)
 
 ### Commands are unexpectedly read aloud
 
@@ -745,15 +741,6 @@ More simultaneous speakers or heavy TTS traffic will increase:
 
 ## Limitations and Known Issues
 
-### Queue wiring bug in `VoiceBridgeSink`
-
-The most significant current issue is the mismatch between:
-
-- `write()` using `self.audio_queue`
-- `get_frame()` and `get_user_frame()` reading `_user_queues`
-
-This means the documented per-user queue model is not fully realized in the checked-in code.
-
 ### TTS is not channel-scoped
 
 While connected to voice, the bot processes messages from any channel it can read, not only the target bridge channel.
@@ -793,7 +780,7 @@ The repository currently contains source files plus a README and requirements fi
 
 ## Dependency Summary
 
-From [`requirements.txt`](/Users/ghively/Projects/openclaw-voice-bridge/requirements.txt):
+From [`requirements.txt`](requirements.txt):
 
 - `discord.py>=2.3.2`
 - `discord-ext-voice-recv>=0.5.2`
@@ -808,7 +795,7 @@ From [`requirements.txt`](/Users/ghively/Projects/openclaw-voice-bridge/requirem
 
 If you are new to the codebase, read in this order:
 
-1. [`main.py`](/Users/ghively/Projects/openclaw-voice-bridge/main.py)
-2. [`audio_sink.py`](/Users/ghively/Projects/openclaw-voice-bridge/audio_sink.py)
-3. [`README.md`](/Users/ghively/Projects/openclaw-voice-bridge/README.md)
-4. [`CONTRIBUTING.md`](/Users/ghively/Projects/openclaw-voice-bridge/CONTRIBUTING.md)
+1. [`main.py`](main.py)
+2. [`audio_sink.py`](audio_sink.py)
+3. [`README.md`](README.md)
+4. [`CONTRIBUTING.md`](CONTRIBUTING.md)

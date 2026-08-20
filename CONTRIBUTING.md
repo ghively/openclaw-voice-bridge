@@ -48,7 +48,7 @@ The repository is small and does not currently enforce formatting or linting thr
 
 Guidelines:
 
-- follow existing Python style in [`main.py`](/Users/ghively/Projects/openclaw-voice-bridge/main.py) and [`audio_sink.py`](/Users/ghively/Projects/openclaw-voice-bridge/audio_sink.py)
+- follow existing Python style in [`main.py`](main.py) and [`audio_sink.py`](audio_sink.py)
 - prefer clear, explicit names over compact abstractions
 - keep Discord event flow easy to trace
 - document behavior changes in comments only where the code is otherwise non-obvious
@@ -57,13 +57,20 @@ Guidelines:
 
 When making behavioral changes, update:
 
-- [`DOCS.md`](/Users/ghively/Projects/openclaw-voice-bridge/DOCS.md)
-- [`README.md`](/Users/ghively/Projects/openclaw-voice-bridge/README.md)
-- [`CHANGELOG.md`](/Users/ghively/Projects/openclaw-voice-bridge/CHANGELOG.md) when appropriate
+- [`DOCS.md`](DOCS.md)
+- [`README.md`](README.md)
+- [`CHANGELOG.md`](CHANGELOG.md) when appropriate
 
 ## Testing
 
-There is no automated test suite in the current repository. Contributions should therefore include careful manual validation.
+There is a small automated regression test suite in `tests/` (currently covering the `join_voice()` sink-cleanup crash and the removed `CHANNELS` dead code). It does not cover the audio pipeline itself, so contributions should still include careful manual validation.
+
+Run the automated tests with:
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest tests/
+```
 
 Recommended manual test plan:
 
