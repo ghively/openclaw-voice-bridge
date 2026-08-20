@@ -61,7 +61,6 @@ VAD_AGGRESSIVENESS = int(os.getenv("VAD_AGGRESSIVENESS", "3"))
 
 # Audio Configuration
 SAMPLE_RATE = 48000
-CHANNELS = 1  # Mono after conversion
 
 # Rate Limiting
 TTS_COOLDOWN = 3.0  # seconds
@@ -645,7 +644,8 @@ async def join_voice(ctx: commands.Context):
         logger.error(f"Error joining voice channel: {e}", exc_info=True)
         await ctx.send(f"Error joining voice channel: {e}")
         voice_client = None
-        sink.cleanup()
+        if sink is not None:
+            sink.cleanup()
         sink = None
         _connected = False
 
