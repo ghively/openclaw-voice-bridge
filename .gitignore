@@ -27,8 +27,18 @@ wheels/
 
 # Virtual environments
 venv/
+.venv/
 ENV/
 env/
+
+# Test artifacts
+.pytest_cache/
+coverage/
+.coverage
+htmlcov/
+
+# Claude Code / agent local state
+.claude/
 
 # macOS
 .DS_Store
