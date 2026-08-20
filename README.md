@@ -6,6 +6,10 @@
 [![Faster-Whisper](https://img.shields.io/badge/STT-Faster--Whisper-green.svg)](https://github.com/SYSTRAN/faster-whisper)
 [![Piper TTS](https://img.shields.io/badge/TTS-Piper-orange.svg)](https://github.com/rhasspy/piper)
 
+> **Note:** This is an independent, unaffiliated project and has no connection to the separate
+> "OpenClaw" personal-AI-assistant project at [openclaw.ai](https://openclaw.ai). The name overlap
+> is coincidental; this repo is a small single-file Discord bot for voice transcription/TTS.
+
 A high-performance, real-time Discord voice bridge that seamlessly connects spoken word to text and back again. Built with a focus on accessibility and low-latency interaction, OpenClaw Voice Bridge transforms your Discord voice channels into inclusive, multi-modal communication hubs.
 
 ---
